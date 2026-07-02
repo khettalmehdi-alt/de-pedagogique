@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Dé interactif pédagogique</title>
+<style>
+:root{--bg:#f6f1ea;--card:#fffdf8;--ink:#252525;--muted:#6b645c;--accent:#e86f7a}
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:radial-gradient(circle at top,#fffaf1,var(--bg));color:var(--ink);min-height:100vh;padding:18px}.wrap{max-width:1050px;margin:auto}.top{text-align:center;margin:10px 0 18px}h1{margin:0;font-size:clamp(28px,5vw,48px)}.sub{color:var(--muted);margin-top:8px}.grid{display:grid;grid-template-columns:1fr 1.2fr;gap:18px}.panel{background:var(--card);border:1px solid #eadfd1;border-radius:22px;box-shadow:0 12px 30px #0001;padding:18px}.stage{height:310px;display:grid;place-items:center;perspective:900px}.cube{width:155px;height:155px;position:relative;transform-style:preserve-3d;transition:transform 1.2s cubic-bezier(.18,.9,.24,1.15)}.face{position:absolute;width:155px;height:155px;border-radius:18px;background:white;border:4px solid var(--c);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:10px;box-shadow:inset 0 0 0 8px #fff}.ico{font-size:34px}.ttl{font-weight:900;font-size:18px;line-height:1.05;margin:7px 0}.desc{font-size:11px;color:#5d5d5d}.f1{--c:#ec6f83;transform:rotateY(0deg) translateZ(77.5px)}.f2{--c:#3b3b45;transform:rotateY(90deg) translateZ(77.5px)}.f3{--c:#55bde1;transform:rotateY(180deg) translateZ(77.5px)}.f4{--c:#82c783;transform:rotateY(-90deg) translateZ(77.5px)}.f5{--c:#8d75cb;transform:rotateX(90deg) translateZ(77.5px)}.f6{--c:#efbf68;transform:rotateX(-90deg) translateZ(77.5px)}button{border:0;border-radius:16px;padding:15px 18px;font-weight:800;cursor:pointer;background:var(--accent);color:white;font-size:17px;box-shadow:0 8px 18px #e86f7a55}button.secondary{background:#302f36;box-shadow:none}.btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}.result h2{margin:0 0 4px;font-size:32px}.badge{display:inline-block;padding:8px 12px;border-radius:999px;background:#00000008;font-weight:800;margin-bottom:12px}.cols{display:grid;grid-template-columns:1fr 1fr;gap:12px}.box{background:#faf5ed;border-radius:16px;padding:13px}.box h3{margin:0 0 7px;font-size:17px}ul{margin:0;padding-left:20px}.history{font-size:14px;color:var(--muted);line-height:1.7}.timer{font-size:38px;font-weight:900;text-align:center;margin:10px 0}.edit textarea{width:100%;height:92px;border:1px solid #ddd;border-radius:12px;padding:10px;font-family:inherit}.edit input{width:100%;border:1px solid #ddd;border-radius:12px;padding:10px;margin-bottom:8px}.small{font-size:13px;color:var(--muted)}@media(max-width:800px){.grid{grid-template-columns:1fr}.cols{grid-template-columns:1fr}.stage{height:260px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <div class="top"><h1>🎲 Dé interactif pédagogique</h1><div class="sub">Lance le dé, découvre une contrainte, puis adapte ta situation pédagogique.</div></div>
+ <div class="grid">
+  <section class="panel">
+   <div class="stage"><div class="cube" id="cube"></div></div>
+   <div class="btns"><button id="roll">Lancer le dé</button><button class="secondary" id="timerBtn">Chrono 2 min</button><button class="secondary" id="reset">Réinitialiser</button></div>
+   <div class="timer" id="timer">02:00</div>
+   <div class="box"><h3>Historique</h3><div class="history" id="history">Aucun lancer pour le moment.</div></div>
+  </section>
+  <section class="panel result" id="result"></section>
+ </div>
+ <section class="panel edit" style="margin-top:18px">
+  <h2>Mode formateur</h2>
+  <p class="small">Tu peux modifier les faces. Les changements restent enregistrés sur cet appareil.</p>
+  <div id="editor"></div>
+ </section>
+</div>
+<script>
+const defaults=[
+{icon:'📣',title:'Parents injoignables',short:'Communication difficile',color:'#ec6f83',rot:'rotateY(0deg)',v:['Prévoir plusieurs canaux de communication','Garder une trace écrite','S’appuyer sur l’équipe éducative'],a:['Message court et clair','Carnet de liaison ou ENT','Relance à des horaires différents'],q:['Comment maintenir le lien avec la famille ?','Qui peut aider à reprendre contact ?']},
+{icon:'€',title:'Budget zéro',short:'Aucun moyen financier supplémentaire',color:'#3b3b45',rot:'rotateY(-90deg)',v:['Ne demander aucun achat obligatoire','Prévoir du matériel fourni','Identifier les aides possibles'],a:['Prêt ou mutualisation','Matériel recyclé','Activité gratuite ou financée'],q:['Comment adapter sans exclure ?','Quel partenaire mobiliser ?']},
+{icon:'🌍',title:'Famille non francophone',short:'Barrière de la langue et des codes culturels',color:'#55bde1',rot:'rotateY(180deg)',v:['Langage simple','Éviter le jargon scolaire','Vérifier la compréhension'],a:['Pictogrammes','Traduction simple','Démonstration visuelle'],q:['Comment rendre la consigne compréhensible ?','Quels supports visuels utiliser ?']},
+{icon:'👨‍👩‍👧‍👦',title:'Fratrie nombreuse',short:'Organisation familiale complexe',color:'#82c783',rot:'rotateY(90deg)',v:['Temps familial limité','Contraintes de transport','Disponibilité variable'],a:['Anticiper les informations','Éviter les délais trop courts','Proposer une organisation souple'],q:['Comment faciliter l’organisation familiale ?','Quelles informations donner en priorité ?']},
+{icon:'👤',title:'Élève avec PAP',short:'Besoins spécifiques à prendre en compte',color:'#8d75cb',rot:'rotateX(-90deg)',v:['Respecter les aménagements','Adapter supports et évaluations','Coordonner avec l’équipe'],a:['Temps supplémentaire','Consignes découpées','Support plus lisible'],q:['Quels aménagements sont nécessaires ?','Comment évaluer équitablement ?']},
+{icon:'🕒',title:'Demi-pensionnaire',short:'Contraintes de transport et de temps',color:'#efbf68',rot:'rotateX(90deg)',v:['Horaires de bus ou cantine','Temps disponible limité','Fatigue possible'],a:['Activité sur temps scolaire','Anticiper le matériel','Éviter les rendez-vous tardifs'],q:['Comment respecter ses contraintes horaires ?','Que prévoir en cas d’absence de transport ?']}
+];
+let data=JSON.parse(localStorage.getItem('dePedago')||'null')||defaults, hist=[];
+const cube=document.getElementById('cube'), result=document.getElementById('result'), history=document.getElementById('history'), editor=document.getElementById('editor');
+function buildCube(){cube.innerHTML=data.map((d,i)=>`<div class="face f${i+1}" style="--c:${d.color}"><div class="ico">${d.icon}</div><div class="ttl">${d.title}</div><div class="desc">${d.short}</div></div>`).join('')}
+function show(i){let d=data[i];document.documentElement.style.setProperty('--accent',d.color);result.innerHTML=`<span class="badge" style="color:${d.color}">${d.icon} Résultat</span><h2>${d.title}</h2><p>${d.short}</p><div class="cols"><div class="box"><h3>Points de vigilance</h3><ul>${d.v.map(x=>`<li>${x}</li>`).join('')}</ul></div><div class="box"><h3>Pistes d’adaptation</h3><ul>${d.a.map(x=>`<li>${x}</li>`).join('')}</ul></div></div><div class="box" style="margin-top:12px"><h3>Questions pour les apprenants</h3><ul>${d.q.map(x=>`<li>${x}</li>`).join('')}</ul></div>`}
+function roll(){
+ let i=Math.floor(Math.random()*data.length);
+ // On ajoute uniquement des tours complets (multiples de 360°),
+ // puis l’orientation exacte de la face tirée : le dé s’arrête donc bien sur la bonne face.
+ let toursX=360*(2+Math.floor(Math.random()*3));
+ let toursY=360*(2+Math.floor(Math.random()*3));
+ cube.style.transform=`rotateX(${toursX}deg) rotateY(${toursY}deg) ${data[i].rot}`;
+ setTimeout(()=>show(i),1200);
+ hist.unshift(new Date().toLocaleTimeString('fr-FR')+' — '+data[i].title);hist=hist.slice(0,8);history.innerHTML=hist.join('<br>')
+}
+function buildEditor(){editor.innerHTML=data.map((d,i)=>`<div class="box" style="margin-bottom:10px"><b>Face ${i+1}</b><input value="${d.title}" onchange="data[${i}].title=this.value;save()"><input value="${d.short}" onchange="data[${i}].short=this.value;save()"><textarea onchange="data[${i}].a=this.value.split('\n').filter(Boolean);save()">${d.a.join('\n')}</textarea><div class="small">Une piste d’adaptation par ligne</div></div>`).join('')}
+function save(){localStorage.setItem('dePedago',JSON.stringify(data));buildCube();show(0)}
+let t=null,left=120;function tick(){let m=Math.floor(left/60),s=left%60;timer.textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');if(left--<=0){clearInterval(t);t=null;alert('Temps terminé !')}}
+document.getElementById('roll').onclick=roll;document.getElementById('reset').onclick=()=>{localStorage.removeItem('dePedago');data=defaults;buildCube();buildEditor();show(0);hist=[];history.textContent='Aucun lancer pour le moment.'};document.getElementById('timerBtn').onclick=()=>{clearInterval(t);left=120;tick();t=setInterval(tick,1000)};
+buildCube();buildEditor();show(0);
+</script>
+</body>
+</html>
